@@ -93,6 +93,17 @@ def draw_weekly_plot(data, country='iran'):
     plt.show()
 
 
+def draw_box_whisker(data):
+    data = data.query('iso_code == "IRN" | '
+                      'iso_code == "AFG" | '
+                      'iso_code == "IRQ" | '
+                      'iso_code == "GBR" | '
+                      'iso_code == "ITA"')
+    data = data[['location', 'new_cases']]
+    data.boxplot(by='location')
+    plt.show()
+
+
 if __name__ == '__main__':
     dataset = get_dataset()
     if dataset is None:
@@ -100,6 +111,7 @@ if __name__ == '__main__':
     count_nan_values(dataset)
     get_columns_values(dataset)
     get_missing_values(dataset)
-    draw_daily_plot(dataset)
-    draw_weekly_plot(dataset)
-    draw_monthly_plot(dataset)
+    # draw_daily_plot(dataset)
+    # draw_weekly_plot(dataset)
+    # draw_monthly_plot(dataset)
+    draw_box_whisker(dataset)
