@@ -63,7 +63,7 @@ def get_missing_values(data):
 def draw_daily_plot(data, country='iran'):
     data = data.query(f'location == "{country.title()}"')
     data = data[['date', 'new_cases', 'new_deaths']]
-    data.plot.bar(x='date', figsize=(255, 10), rot=0)
+    data.plot.bar(x='date', figsize=(255, 10))
     plt.show()
 
 
@@ -80,6 +80,19 @@ def draw_monthly_plot(data, country='iran'):
     plt.show()
 
 
+def draw_weekly_plot(data, country='iran'):
+    data = data.query(f'location == "{country.title()}"')
+    data = data[['date', 'new_cases', 'new_deaths']]
+    data['date'] = pd.to_datetime(data['date'])
+    data = data.groupby([pd.Grouper(key='date', freq='W-SUN')])['new_cases', 'new_deaths'] \
+        .sum() \
+        .reset_index() \
+        .sort_values('date')
+    data['date'] = data['date'].dt.date
+    data.plot.bar(x='date', figsize=(10, 10))
+    plt.show()
+
+
 if __name__ == '__main__':
     dataset = get_dataset()
     if dataset is None:
@@ -87,5 +100,6 @@ if __name__ == '__main__':
     count_nan_values(dataset)
     get_columns_values(dataset)
     get_missing_values(dataset)
-    draw_monthly_plot(dataset)
     draw_daily_plot(dataset)
+    draw_weekly_plot(dataset)
+    draw_monthly_plot(dataset)
