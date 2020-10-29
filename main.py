@@ -4,7 +4,6 @@ import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
-import seaborn as sns
 
 DATASET_URL = 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv'
 DATASET_FILENAME = 'owid-covid-data.csv'
@@ -63,13 +62,9 @@ def get_missing_values(data):
 
 def draw_daily_plot(data, country='iran'):
     data = data.query(f'location == "{country.title()}"')
-
-    fig, ax1 = plt.subplots(figsize=(250, 10))
-    daily_data = data.melt('date', value_vars=['new_deaths', 'new_cases'], value_name='cases', var_name='status')
-    sns.barplot(x='date', y='cases', hue='status', data=daily_data, ax=ax1)
-    sns.despine(fig)
-
-    # plt.show()
+    data = data[['date', 'new_cases', 'new_deaths']]
+    data.plot.bar(x='date', figsize=(255, 10), rot=0)
+    plt.show()
 
 
 def draw_monthly_plot(data, country='iran'):
@@ -81,8 +76,7 @@ def draw_monthly_plot(data, country='iran'):
             'new_deaths': data['new_deaths'].groupby(data['date'].dt.to_period('M')).sum(),
         }
     )
-    ax = data.plot.bar(figsize=(10, 10), rot=0)
-    # fig, ax1 = plt.subplots(figsize=(10, 10))
+    data.plot.bar(figsize=(10, 10), rot=0)
     plt.show()
 
 
@@ -93,5 +87,5 @@ if __name__ == '__main__':
     count_nan_values(dataset)
     get_columns_values(dataset)
     get_missing_values(dataset)
-    # draw_daily_plot(dataset)
     draw_monthly_plot(dataset)
+    draw_daily_plot(dataset)
