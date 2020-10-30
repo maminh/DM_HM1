@@ -1,3 +1,4 @@
+import datetime as dt
 import os
 import sys
 
@@ -93,7 +94,7 @@ def draw_weekly_plot(data, country='iran'):
     plt.show()
 
 
-def draw_box_whisker(data):
+def draw_box_whisker_by_countries(data):
     data = data.query('iso_code == "IRN" | '
                       'iso_code == "AFG" | '
                       'iso_code == "IRQ" | '
@@ -112,6 +113,17 @@ def calculate_values(data):
     print(f"Q values of new cases in iran:\n Q1: {q1}\n Q3: {q3}\n IQR: {iqr}")
 
 
+def draw_iran_box_whisker(data):
+    data = data.query('iso_code == "IRN"')
+    data = data[['date', 'new_cases']]
+    data['date'] = pd.to_datetime(data['date'])
+    data['date'] = data['date'].dt.date
+    data['week_date'] = data.apply(lambda row: row['date'] - dt.timedelta(days=row['date'].weekday()), axis=1)
+    data = data[['week_date', 'new_cases']]
+    data.boxplot(by='week_date', figsize=(40, 10), rot=0)
+    plt.show()
+
+
 if __name__ == '__main__':
     dataset = get_dataset()
     if dataset is None:
@@ -124,3 +136,4 @@ if __name__ == '__main__':
     # draw_monthly_plot(dataset)
     # draw_box_whisker(dataset)
     calculate_values(dataset)
+    draw_iran_box_whisker(dataset)
