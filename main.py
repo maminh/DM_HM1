@@ -1,14 +1,24 @@
 import datetime as dt
 import os
 import sys
+import warnings
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
 
+warnings.filterwarnings('ignore')
+
 DATASET_URL = 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv'
 DATASET_FILENAME = 'owid-covid-data.csv'
 NUMERICS = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+
+
+def save_plot(filename, plot):
+    fig = plot.get_figure()
+    if not os.path.exists("figures"):
+        os.mkdir("figures")
+    fig.savefig(os.path.join("figures", filename))
 
 
 def get_dataset():
@@ -35,11 +45,15 @@ def count_nan_values(data):
 def get_columns_values(data):
     numeric_columns = data.select_dtypes(include=NUMERICS)
     for index, column in enumerate(numeric_columns.columns):
-        print(f'Values of column {column}:\n '
-              f'Min: {numeric_columns.iloc[:, index].min()}\n '
-              f'Max: {numeric_columns.iloc[:, index].max()}\n '
-              f'Mean: {numeric_columns.iloc[:, index].mean()}\n '
-              f'Median: {numeric_columns.iloc[:, index].median()}\n')
+        min_value = data.loc[data[column].idxmin()]
+        max_value = data.loc[data[column].idxmax()]
+        print(
+            f'Values of column {column}:\n'
+            f' Min: {min_value[column]}, Country: {min_value["location"]}\n'
+            f' Max: {max_value[column]}, Country: {max_value["location"]}\n'
+            f' Mean: {numeric_columns.iloc[:, index].mean()}\n'
+            f' Median: {numeric_columns.iloc[:, index].median()}\n'
+        )
 
 
 def get_missing_values(data):
@@ -64,8 +78,8 @@ def get_missing_values(data):
 def draw_daily_plot(data, country='iran'):
     data = data.query(f'location == "{country.title()}"')
     data = data[['date', 'new_cases', 'new_deaths']]
-    data.plot.bar(x='date', figsize=(255, 10))
-    plt.show()
+    plot = data.plot.bar(x='date', figsize=(100, 10))
+    save_plot("Q2_daily_cases.png", plot)
 
 
 def draw_monthly_plot(data, country='iran'):
@@ -77,8 +91,8 @@ def draw_monthly_plot(data, country='iran'):
             'new_deaths': data['new_deaths'].groupby(data['date'].dt.to_period('M')).sum(),
         }
     )
-    data.plot.bar(figsize=(10, 10), rot=0)
-    plt.show()
+    plot = data.plot.bar(figsize=(10, 10), rot=0)
+    save_plot("Q2_monthly_cases.png", plot)
 
 
 def draw_weekly_plot(data, country='iran'):
@@ -90,8 +104,8 @@ def draw_weekly_plot(data, country='iran'):
         .reset_index() \
         .sort_values('date')
     data['date'] = data['date'].dt.date
-    data.plot.bar(x='date', figsize=(10, 10))
-    plt.show()
+    plot = data.plot.bar(x='date', figsize=(10, 10))
+    save_plot("Q2_weekly_cases.png", plot)
 
 
 def draw_box_whisker_by_countries(data):
@@ -101,8 +115,8 @@ def draw_box_whisker_by_countries(data):
                       'iso_code == "GBR" | '
                       'iso_code == "ITA"')
     data = data[['location', 'new_cases']]
-    data.boxplot(by='location')
-    plt.show()
+    plot = data.boxplot(by='location')
+    save_plot("Q4_box_whisker_(iran, iraq, afghanistan, uk, italy).png", plot)
 
 
 def calculate_values(data):
@@ -110,7 +124,19 @@ def calculate_values(data):
     q1 = data.new_cases.quantile(.25)
     q3 = data.new_cases.quantile(.75)
     iqr = q3 - q1
-    print(f"Q values of new cases in iran:\n Q1: {q1}\n Q3: {q3}\n IQR: {iqr}")
+    above_iqr = q3 + 1.5 * iqr
+    below_iqr = q1 - 1.5 * iqr
+    upper_whisker = data.query(f'new_cases <= {above_iqr}').new_cases.max()
+    lower_whisker = data.query(f'new_cases >= {below_iqr}').new_cases.min()
+    print(
+        f"Q values of new cases in iran:\n Q1: {q1}\n Q3: {q3}\n IQR: {iqr}\n Upper Whisker: {upper_whisker}\n "
+        f"Lower Whisker: {lower_whisker}\n"
+    )
+
+    outliers = data.query(f'new_cases > {upper_whisker}')\
+        .sort_values('new_cases', ascending=False)[['date', 'new_cases']].head(10)
+    print('10 Outlines from new cases for iran')
+    print(outliers)
 
 
 def draw_iran_box_whisker(data):
@@ -120,8 +146,8 @@ def draw_iran_box_whisker(data):
     data['date'] = data['date'].dt.date
     data['week_date'] = data.apply(lambda row: row['date'] - dt.timedelta(days=row['date'].weekday()), axis=1)
     data = data[['week_date', 'new_cases']]
-    data.boxplot(by='week_date', figsize=(40, 10), rot=0)
-    plt.show()
+    plot = data.boxplot(by='week_date', figsize=(50, 10))
+    save_plot("bonus_question_1_iran_new_cases_box_whisker.jpg", plot)
 
 
 if __name__ == '__main__':
@@ -131,9 +157,10 @@ if __name__ == '__main__':
     count_nan_values(dataset)
     get_columns_values(dataset)
     get_missing_values(dataset)
-    # draw_daily_plot(dataset)
-    # draw_weekly_plot(dataset)
-    # draw_monthly_plot(dataset)
-    # draw_box_whisker(dataset)
+    draw_daily_plot(dataset)
+    draw_weekly_plot(dataset)
+    draw_monthly_plot(dataset)
+    draw_box_whisker_by_countries(dataset)
     calculate_values(dataset)
     draw_iran_box_whisker(dataset)
+    plt.show()

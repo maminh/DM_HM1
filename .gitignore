@@ -275,3 +275,5 @@ dmypy.json
 .idea/*
 
 .~*
+
+figures/*
