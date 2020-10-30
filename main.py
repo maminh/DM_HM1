@@ -104,6 +104,14 @@ def draw_box_whisker(data):
     plt.show()
 
 
+def calculate_values(data):
+    data = data.query('iso_code == "IRN"')
+    q1 = data.new_cases.quantile(.25)
+    q3 = data.new_cases.quantile(.75)
+    iqr = q3 - q1
+    print(f"Q values of new cases in iran:\n Q1: {q1}\n Q3: {q3}\n IQR: {iqr}")
+
+
 if __name__ == '__main__':
     dataset = get_dataset()
     if dataset is None:
@@ -114,4 +122,5 @@ if __name__ == '__main__':
     # draw_daily_plot(dataset)
     # draw_weekly_plot(dataset)
     # draw_monthly_plot(dataset)
-    draw_box_whisker(dataset)
+    # draw_box_whisker(dataset)
+    calculate_values(dataset)
