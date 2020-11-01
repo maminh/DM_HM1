@@ -150,6 +150,17 @@ def draw_iran_box_whisker(data):
     save_plot("bonus_question_1_iran_new_cases_box_whisker.jpg", plot)
 
 
+def find_missing_values(data):
+    data = data.query('iso_code == "FRA"')
+    print(f'number of missing values for france new_cases {data["new_cases"].isnull().sum()}')
+    missing_values = data.query('new_cases < 0')
+    print(f'number of wrong values for france new_cases: {missing_values["new_cases"].count()}')
+    for index, row in missing_values.iterrows():
+        mean = data.query(f'index == {index + 1} | index == {index - 1}')['new_cases'].mean()
+        print(f'Suggested value for column with index {index} is {mean}')
+    pass
+
+
 if __name__ == '__main__':
     dataset = get_dataset()
     if dataset is None:
@@ -163,4 +174,5 @@ if __name__ == '__main__':
     draw_box_whisker_by_countries(dataset)
     calculate_values(dataset)
     draw_iran_box_whisker(dataset)
+    find_missing_values(dataset)
     plt.show()
